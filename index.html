@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>15-Min Price Predictor</title>
+<style>
+:root{--bg:#07090d;--card:#0e131b;--ln:#1d2633;--tx:#e6edf3;--mu:#7d8a9a;--up:#19d37a;--dn:#ff4d5e;--nt:#aeb7c4;--am:#f5b83d;--bl:#4da3ff;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+#app{max-width:480px;margin:0 auto;padding:14px 14px 40px}
+h1{font:800 18px ui-monospace,Menlo,monospace;letter-spacing:.5px;margin:4px 0 12px;text-align:center}
+h2{font:700 13px ui-monospace,Menlo,monospace;color:var(--mu);letter-spacing:1px;margin:0 0 8px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.chip{flex:0 0 auto;min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--ln);background:var(--card);color:var(--tx);font:700 15px ui-monospace,Menlo,monospace}
+.chip.on{border-color:var(--bl);background:#12263d;color:#fff}
+.cust{display:flex;gap:8px;margin:6px 0 12px}
+.cust input{flex:1;min-height:44px;border-radius:12px;border:1px solid var(--ln);background:var(--card);color:var(--tx);padding:0 12px;font:16px ui-monospace,Menlo,monospace}
+.cust button{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--ln);background:var(--card);color:var(--tx);font-weight:700}
+.big{width:100%;min-height:62px;border:0;border-radius:16px;background:linear-gradient(135deg,#2b6bff,#7a4dff);color:#fff;font:800 17px ui-monospace,Menlo,monospace;letter-spacing:.5px}
+.big:disabled{opacity:.6}
+#st{min-height:20px;margin:8px 0;color:var(--mu);font-size:13px;text-align:center}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:14px;margin:0 0 12px}
+.sig{font:800 38px ui-monospace,Menlo,monospace;text-align:center;margin:2px 0}
+.UP{color:var(--up)}.DOWN{color:var(--dn)}.NEUTRAL{color:var(--nt)}
+.warn{background:#3a2a07;color:var(--am);border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px;text-align:center;margin:8px 0}
+.sim{background:#2a1740;color:#c9a0ff;border-radius:10px;padding:8px;text-align:center;font-weight:700;font-size:13px;margin-bottom:8px}
+.pr{display:flex;justify-content:space-between;gap:6px;font:700 14px ui-monospace,Menlo,monospace;margin:8px 0}
+.pr span{flex:1;text-align:center;padding:6px 0;border-radius:8px;background:#0a0f16}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.two small,.k{display:block;color:var(--mu);font-size:11px;letter-spacing:.8px}
+.num{font:800 24px ui-monospace,Menlo,monospace}
+.mono{font-family:ui-monospace,Menlo,monospace}
+.row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--ln);font-size:14px}
+.bar{font:16px ui-monospace,Menlo,monospace;letter-spacing:1px;text-align:center;margin:8px 0}
+#cdbox{text-align:center;border-top:1px solid var(--ln);padding-top:10px;margin-top:6px}
+#cd{display:block;font:800 42px ui-monospace,Menlo,monospace}
+.ul{margin:0;padding-left:0;list-style:none}.ul li{padding:4px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid div{background:#0a0f16;border-radius:10px;padding:10px}
+.grid b{display:block;font:800 17px ui-monospace,Menlo,monospace}
+details summary{font-weight:700;min-height:36px}
+.ag{padding:8px 0;border-top:1px solid var(--ln);font-size:13px}
+.mu{color:var(--mu);font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;margin-bottom:8px}
+.stats div{background:#0a0f16;border-radius:10px;padding:8px 2px;font-size:11px;color:var(--mu)}
+.stats b{display:block;font:800 18px ui-monospace,Menlo,monospace;color:var(--tx)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:6px 4px;border-top:1px solid var(--ln);white-space:nowrap}th{color:var(--mu);font-weight:600}
+a,.lk{color:var(--bl)}
+</style></head><body><div id="app">
+<h1>⚡ 15-MIN PRICE PREDICTOR</h1>
+<div id="live" class="mu" style="text-align:center;margin:0 0 10px">Checking live feed…</div>
+<div class="chips" id="chips"></div>
+<div class="cust"><input id="cust" placeholder="Custom ticker (e.g. ADA)" autocapitalize="characters" autocomplete="off"><button id="addc">Add</button></div>
+<button class="big" id="go">🔮 PREDICT NEXT 15 MINUTES</button>
+<div id="st"></div>
+<div id="out"></div>
+<section class="card" id="hist"></section>
+<p class="mu">Experimental, rule-based market analysis — not financial advice and not a guarantee. Probabilities are estimates from recent candle statistics; near 50% means no real edge.</p>
+</div>
+<script>
+const $=s=>document.querySelector(s),cl=(x,a=-1,b=1)=>Math.max(a,Math.min(b,x)),sum=a=>a.reduce((s,x)=>s+x,0),avg=a=>a.length?sum(a)/a.length:0,sd=a=>{const m=avg(a);return Math.sqrt(avg(a.map(x=>(x-m)**2)))};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fp=x=>'$'+(x>=1000?x.toLocaleString('en-US',{maximumFractionDigits:2}):x>=1?x.toFixed(3):x.toFixed(5));
+const hm=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}),hms=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit',second:'2-digit'});
+const ema=(a,n)=>{const k=2/(n+1);let e=a[0];return a.map(x=>e=x*k+e*(1-k))};
+const Phi=z=>{const t=1/(1+.2316419*Math.abs(z)),p=.3989423*Math.exp(-z*z/2)*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p};
+function rsi(c,n=14){let g=0,l=0;for(let i=1;i<=n;i++){const d=c[i]-c[i-1];d>0?g+=d:l-=d}g/=n;l/=n;for(let i=n+1;i<c.length;i++){const d=c[i]-c[i-1];g=(g*(n-1)+Math.max(d,0))/n;l=(l*(n-1)+Math.max(-d,0))/n}return l?100-100/(1+g/l):100}
+function atr(b,n=14){const tr=b.map((x,i)=>i?Math.max(x.h-x.l,Math.abs(x.h-b[i-1].c),Math.abs(x.l-b[i-1].c)):x.h-x.l);let a=avg(tr.slice(0,n));for(let i=n;i<tr.length;i++)a=(a*(n-1)+tr[i])/n;return a}
+function piv(b,w=2){const H=[],L=[];for(let i=w;i<b.length-w;i++){let h=1,l=1;for(let j=1;j<=w;j++){if(b[i].h<=b[i-j].h||b[i].h<=b[i+j].h)h=0;if(b[i].l>=b[i-j].l||b[i].l>=b[i+j].l)l=0}if(h)H.push({p:b[i].h});if(l)L.push({p:b[i].l})}return{H,L}}
+const agg=(a,k)=>{const o=[];for(let i=a.length%k;i+k<=a.length;i+=k){const s=a.slice(i,i+k);o.push({t:s[0].t,o:s[0].o,h:Math.max(...s.map(x=>x.h)),l:Math.min(...s.map(x=>x.l)),c:s[k-1].c,v:sum(s.map(x=>x.v))})}return o};
+
+/* ===== DATA ADAPTER — swap this to connect any feed. candles(sym, seconds) must return [{t(ms),o,h,l,c,v}] oldest first. ===== */
+const KR=s=>s=='BTC'?'XBT':s,TO={signal:AbortSignal.timeout(8000)};
+const SOURCES=[
+ {name:'Coinbase',async candles(sym,g){const r=await fetch(`https://api.exchange.coinbase.com/products/${sym}-USD/candles?granularity=${g}`,{signal:AbortSignal.timeout(8000)});if(!r.ok)throw new Error('HTTP '+r.status);const a=await r.json();if(!Array.isArray(a)||!a.length)throw new Error('no candles');return a.map(x=>({t:x[0]*1000,l:x[1],h:x[2],o:x[3],c:x[4],v:x[5]})).reverse()}},
+ {name:'Kraken',async candles(sym,g){const r=await fetch(`https://api.kraken.com/0/public/OHLC?pair=${KR(sym)}USD&interval=${g/60}`,{signal:AbortSignal.timeout(8000)});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(j.error&&j.error.length)throw new Error(j.error[0]);const k=Object.keys(j.result).find(x=>x!='last'),a=j.result[k];if(!a||!a.length)throw new Error('no candles');return a.map(x=>({t:x[0]*1000,o:+x[1],h:+x[2],l:+x[3],c:+x[4],v:+x[6]}))}},
+ {name:'Bitstamp',async candles(sym,g){const r=await fetch(`https://www.bitstamp.net/api/v2/ohlc/${sym.toLowerCase()}usd/?step=${g}&limit=300`,{signal:AbortSignal.timeout(8000)});if(!r.ok)throw new Error('HTTP '+r.status);const a=(await r.json()).data.ohlc;if(!a||!a.length)throw new Error('no candles');return a.map(x=>({t:x.timestamp*1000,o:+x.open,h:+x.high,l:+x.low,c:+x.close,v:+x.volume}))}}];
+let ACTIVE=null;
+async function getLive(){const er=[];for(const s of SOURCES){try{const[m1,m5,m15]=await Promise.all([60,300,900].map(g=>s.candles(sel,g)));ACTIVE=s;return{m1:m1.slice(-300),m5:m5.slice(-300),m15:m15.slice(-100),sim:false,src:s.name}}catch(e){er.push(s.name+': '+(e.message||e))}}throw new Error(er.join(' · '))}
+async function pulse(){if(sim||busy)return;const er=[];let c;
+ for(const s of ACTIVE?[ACTIVE]:SOURCES){try{c=await s.candles(sel,60);ACTIVE=s;break}catch(e){er.push(s.name+': '+(e.message||e))}}
+ if(!c){ACTIVE=null;$('#live').innerHTML=`<span style="color:var(--am)">⚠️ No live feed — ${esc(er.join(' · '))}</span>`;return}
+ $('#live').innerHTML=`<span class="UP">● LIVE</span> ${esc(sel)} <b class="mono">${fp(c.at(-1).c)}</b> · ${ACTIVE.name} · ${hms(Date.now())}`}
+function simData(){let p=20+Math.random()*80,d=0;const a=[],base=Math.floor(Date.now()/6e4)*6e4;for(let i=1500;i>=0;i--){if(i%240==0)d=(Math.random()-.5)*6e-4;const o=p,s=7e-4;p=o*(1+d+(Math.random()-.5)*2*s);a.push({t:base-i*6e4,o,h:Math.max(o,p)*(1+Math.random()*s/2),l:Math.min(o,p)*(1-Math.random()*s/2),c:p,v:50+Math.random()*100*(i<10?2:1)})}return{m1:a.slice(-300),m5:agg(a,5).slice(-300),m15:agg(a,15).slice(-100),sim:true}}
+
+/* ===== ANALYSIS: six rule-based "analysts" ===== */
+function analyze(D){
+ const{m1,m5,m15}=D;if(m1.length<60||m5.length<30||m15.length<12)throw new Error('not enough candle history');
+ const P=m1.at(-1).c,c1=m1.map(x=>x.c),c5=m5.map(x=>x.c),c15=m15.map(x=>x.c),a5=atr(m5),ag=[],F=[];
+ const add=(name,w,s,notes)=>ag.push({name,w,s:cl(s),notes});
+ const lr=a=>a.slice(1).map((x,i)=>Math.log(x/a[i])),r1=lr(c1),s60=sd(r1.slice(-60)),vr=sd(r1.slice(-15))/(sd(r1.slice(-120))||1e-9);
+ const sig=Math.max(s60*Math.sqrt(15)*P,a5*.5);
+ const e9=ema(c5,9).at(-1),e21=ema(c5,21).at(-1),e50=ema(c5,50).at(-1),q9=ema(c15,9).at(-1),q21=ema(c15,21).at(-1),pv=piv(m5.slice(-80));
+ // 1 Trend
+ let ts=0,tn=[];const al=(e9>e21?1:-1)*.25+(e21>e50?1:-1)*.2+(P>e21?1:-1)*.1+(q9>q21?1:-1)*.25;ts+=al;
+ tn.push([al>.3?'EMAs (5m + 15m) lean bullish':al<-.3?'EMAs (5m + 15m) lean bearish':'EMAs are mixed — no clean trend',al]);
+ const hh=pv.H.slice(-2),ll=pv.L.slice(-2);
+ if(hh.length==2&&ll.length==2){if(hh[1].p>hh[0].p&&ll[1].p>ll[0].p){ts+=.3;tn.push(['Higher highs and higher lows on 5m',.3])}else if(hh[1].p<hh[0].p&&ll[1].p<ll[0].p){ts-=.3;tn.push(['Lower highs and lower lows on 5m',-.3])}}
+ add('Trend',.3,ts,tn);
+ // 2 Momentum
+ const rs1=rsi(c1),rs5=rsi(c5),E12=ema(c5,12),E26=ema(c5,26),ML=E12.map((x,i)=>x-E26[i]),SG=ema(ML,9),H=ML.map((x,i)=>x-SG[i]);
+ let rsc=cl((rs5-50)/20)*.6+cl((rs1-50)/25)*.4;if(rs5>75&&rsc>0||rs5<25&&rsc<0)rsc*=.4;
+ const ms=cl(H.at(-1)/a5*4)*.6+cl((H.at(-1)-H.at(-4))/a5*6)*.4,roc=(P-c1.at(-16))/sig,rc=cl(roc*1.2),mn=[];
+ mn.push([`RSI ${rs5.toFixed(0)} (5m) / ${rs1.toFixed(0)} (1m)${rs5>70?' — stretched':rs5<30?' — washed out':''}`,rsc*.3]);
+ if(Math.abs(ms)>.15)mn.push([`MACD momentum ${ms>0?'positive':'negative'} on 5m`,ms*.4]);
+ mn.push([`Price ${roc>0?'up':'down'} ${Math.abs((P/c1.at(-16)-1)*100).toFixed(2)}% over 15 min`,rc*.3]);
+ add('Momentum',.25,.3*rsc+.4*ms+.3*rc,mn);
+ // 3 Volume
+ const done=m1.slice(0,-1),vN=avg(done.slice(-5).map(x=>x.v)),vB=avg(done.slice(-35,-5).map(x=>x.v)),vx=vB?vN/vB:1,l15=done.slice(-15),fl=sum(l15.map(x=>x.v*Math.sign(x.c-x.o)))/(sum(l15.map(x=>x.v))||1),thin=l15.filter(x=>!x.v).length>=3;
+ const vn=[[`Candle-flow proxy ${fl>0?'buy':'sell'}-leaning (${Math.round(Math.abs(fl)*100)}% net of 15-min volume)`,fl*.5]];
+ if(vx>1.8)vn.push([`Volume spike: ${vx.toFixed(1)}× recent norm`,fl*.4]);else if(vx<.6)vn.push(['Volume is fading',0]);
+ add('Volume',.15,fl*cl(.4+vx*.4,.3,1)*(vx<.6?.5:1),vn);
+ // 4 Price action
+ const vw=(w=>sum(w.map(x=>(x.h+x.l+x.c)/3*x.v))/(sum(w.map(x=>x.v))||1))(m1.slice(-60)),cb=c5.slice(-20),mu=avg(cb),sg=sd(cb),pb=sg?(P-(mu-2*sg))/(4*sg):.5;
+ const hi20=Math.max(...m5.slice(-22,-2).map(x=>x.h)),lo20=Math.min(...m5.slice(-22,-2).map(x=>x.l)),bws=[];
+ for(let i=Math.max(0,c5.length-100);i<=c5.length-20;i++){const w=c5.slice(i,i+20);bws.push(sd(w)/avg(w))}
+ const bwp=bws.filter(x=>x<=sg/mu).length/bws.length;let ps=0;const pn=[],vd=cl((P-vw)/a5)*.3;ps+=vd+cl((pb-.5)*1.2)*.2;
+ pn.push([P>vw?'Price is holding above VWAP':'Price is below VWAP',vd]);
+ if(P>hi20){ps+=.5;pn.push(['Breakout above the 5m 20-bar high',.5])}else if(P<lo20){ps-=.5;pn.push(['Breakdown below the 5m 20-bar low',-.5])}
+ const H2=pv.H.slice(-2),L2=pv.L.slice(-2);
+ if(H2.length==2&&Math.abs(H2[0].p-H2[1].p)<.3*a5&&P<H2[1].p-.3*a5){ps-=.3;pn.push(['Possible double top near '+fp(H2[1].p),-.3])}
+ if(L2.length==2&&Math.abs(L2[0].p-L2[1].p)<.3*a5&&P>L2[1].p+.3*a5){ps+=.3;pn.push(['Possible double bottom near '+fp(L2[1].p),.3])}
+ const imp=c5.at(-7)-c5.at(-13),pul=c5.at(-1)-c5.at(-7);
+ if(imp>2.5*a5&&pul<0&&-pul<.5*imp){ps+=.3;pn.push(['Bull-flag shape: strong push, shallow pullback',.3])}
+ if(imp<-2.5*a5&&pul>0&&pul<-.5*imp){ps-=.3;pn.push(['Bear-flag shape: sharp drop, weak bounce',-.3])}
+ if(bwp<.2)pn.push(['Range compression — a sharp move may be building',0]);
+ add('Price Action',.3,ps,pn);
+ // 5 Volatility + regime
+ const er=(w=>Math.abs(w.at(-1)-w[0])/(sum(w.slice(1).map((x,i)=>Math.abs(x-w[i])))||1))(c5.slice(-13));
+ const reg=vr>1.8?['🟠','HIGH VOLATILITY']:bwp<.2&&er<.35?['🔵','CONSOLIDATING']:er>.35&&ts>.25?['🟢','TRENDING UP']:er>.35&&ts<-.25?['🔴','TRENDING DOWN']:['🟡','CHOPPY'];
+ add('Volatility',0,0,[[`${vr>1.8?'Expanding fast':vr<.7?'Quiet':'Normal'} — typical 15-min swing ≈ ${(sig/P*100).toFixed(2)}%`,0]]);
+ // 6 Risk
+ let rf=1;const age=(Date.now()-m1.at(-1).t)/1e3;
+ if(!D.sim&&age>150){rf*=.4;F.push(`Data looks stale (${Math.round(age)}s since last candle)`)}
+ if(thin){rf*=.6;F.push('Thin trading — several empty 1-min candles')}
+ if(vr>1.8){rf*=.6;F.push('Volatility is spiking')}
+ if(rs5>78||rs5<22){rf*=.8;F.push('RSI at an extreme — reversal risk')}
+ if(m5.length<60||m15.length<30){rf*=.5;F.push('Limited history for some indicators')}
+ add('Risk',0,0,[[F.length?F.join('; '):'No major reliability flags',0]]);
+ // combine: weighted lean, shrunk by agreement and risk
+ const dv=ag.filter(a=>a.w),S=sum(dv.map(a=>a.w*a.s))/sum(dv.map(a=>a.w)),vo=dv.filter(a=>Math.abs(a.s)>.12),sgn=Math.sign(S)||1;
+ const A=vo.length?sum(vo.filter(a=>Math.sign(a.s)==sgn).map(a=>a.w))/sum(vo.map(a=>a.w)):.5,agree=cl((A-.5)*2,0,1);
+ if(agree<.4&&vo.length>1)F.push('Analysts disagree with each other');
+ const eff=S*(.35+.65*agree)*rf,m=.45*eff,db=.1,pu=1-Phi(db-m),pd=Phi(-db-m);
+ const up=Math.round(pu*100),dn=Math.round(pd*100),ne=100-up-dn;
+ const dir=Math.abs(eff)<.18||agree<.34||rf<.45||vo.length<2?'NEUTRAL':eff>0?'UP':'DOWN',conf=dir=='UP'?up:dir=='DOWN'?dn:null;
+ const pred=P+m*sig,lo=pred-sig,hi=pred+sig;
+ const ups=pv.H.map(x=>x.p).filter(p=>p>P+.4*sig&&p<P+2*sig).sort((a,b)=>a-b),dns=pv.L.map(x=>x.p).filter(p=>p<P-.4*sig&&p>P-2*sig).sort((a,b)=>b-a);
+ const sl=pv.L.map(x=>x.p).filter(p=>p<P).sort((a,b)=>b-a)[0],sh=pv.H.map(x=>x.p).filter(p=>p>P).sort((a,b)=>a-b)[0];
+ const inv=dir=='UP'?P-cl(sl!=null?P-sl:a5,.6*a5,1.8*a5):dir=='DOWN'?P+cl(sh!=null?sh-P:a5,.6*a5,1.8*a5):null;
+ const all=ag.flatMap(a=>a.notes.map(([t,v])=>({t,v:v*a.w}))).filter(x=>x.v);let why;
+ if(dir=='NEUTRAL')why=[{t:'Signals are mixed or too weak for a real edge',v:0},...all.sort((a,b)=>b.v-a.v).slice(0,2),...all.sort((a,b)=>a.v-b.v).slice(0,2)];
+ else why=all.filter(x=>x.v*(dir=='UP'?1:-1)>0).sort((a,b)=>Math.abs(b.v)-Math.abs(a.v)).slice(0,4);
+ return{P,dir,up,dn,ne,conf,strength:Math.round(Math.min(1,Math.abs(eff)/.7)*100),pred,lo,hi,sig,mv:(pred-P)/P*100,bull:ups[0]??P+sig,bear:dns[0]??P-sig,inv,reg,ag,why,F,rf,vr,
+  low:dir=='NEUTRAL'||conf<54||rf<.7||vr>1.8,D,m1}}
+
+/* ===== UI ===== */
+let sel='BTC',assets=['BTC','ETH','SOL','DOGE','XRP'],hist=[],pred=null,timer=null,busy=false,sim=false;
+try{hist=JSON.parse(localStorage.getItem('pp_hist')||'[]').map(h=>h.r=='p'?{...h,r:'x'}:h)}catch(e){}
+const save=()=>{try{localStorage.setItem('pp_hist',JSON.stringify(hist.slice(-50)))}catch(e){}};
+const mmss=ms=>{const s=Math.max(0,Math.ceil(ms/1e3));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+function chips(){$('#chips').innerHTML=assets.map(a=>`<button class="chip ${a==sel?'on':''}" data-a="${a}">${a}</button>`).join('')}
+$('#chips').onclick=e=>{const a=e.target.dataset.a;if(a){sel=a;chips();pulse()}};
+$('#addc').onclick=()=>{const v=$('#cust').value.trim().toUpperCase().replace(/-USD$/,'');if(!/^[A-Z0-9]{2,10}$/.test(v))return;if(!assets.includes(v))assets.push(v);sel=v;$('#cust').value='';chips();pulse()};
+function chart(m1,R){
+ const W=360,H=210,N=45,T=60,xs=W/T,b=m1.slice(-N),ys=[...b.flatMap(x=>[x.h,x.l]),R.hi,R.lo,R.bull,R.bear,R.inv??R.P];let mx=Math.max(...ys),mn=Math.min(...ys);const pd=(mx-mn)*.06||1;mx+=pd;mn-=pd;
+ const y=v=>6+(mx-v)/(mx-mn)*(H-12),x=i=>i*xs+xs/2;
+ let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Recent 1-minute candles with the 15-minute forecast range"><rect x="${N*xs}" y="${y(R.hi)}" width="${(T-N)*xs}" height="${Math.max(2,y(R.lo)-y(R.hi))}" fill="#4da3ff" opacity=".2"/>`;
+ b.forEach((k,i)=>{const c=k.c>=k.o?'#19d37a':'#ff4d5e';s+=`<line x1="${x(i)}" x2="${x(i)}" y1="${y(k.h)}" y2="${y(k.l)}" stroke="${c}"/><rect x="${x(i)-xs*.3}" y="${y(Math.max(k.o,k.c))}" width="${xs*.6}" height="${Math.max(1,Math.abs(y(k.o)-y(k.c)))}" fill="${c}"/>`});
+ s+=`<line x1="${x(N-1)}" y1="${y(R.P)}" x2="${W-2}" y2="${y(R.P)}" stroke="#7d8a9a" stroke-dasharray="2 3"/><line x1="${x(N-1)}" y1="${y(R.P)}" x2="${W-4}" y2="${y(R.pred)}" stroke="#4da3ff" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+ if(R.inv!=null)s+=`<line x1="0" x2="${W}" y1="${y(R.inv)}" y2="${y(R.inv)}" stroke="#f5b83d" stroke-dasharray="3 4"/>`;
+ return s+'</svg>'}
+function view(R,asset){
+ const D=R.D,now=Date.now(),lab=R.dir=='UP'?'🟢 UP':R.dir=='DOWN'?'🔴 DOWN':'⚪ NEUTRAL · NO TRADE',n=Math.round(R.strength/10);
+ const ic=v=>v>.12?'🟢':v<-.12?'🔴':'⚪';
+ pred={id:now,asset,dir:R.dir,start:R.P,target:R.pred,lo:R.lo,hi:R.hi,sig:R.sig,end:now+9e5,sim:D.sim};
+ hist.push({id:now,t:now,asset,dir:R.dir,tg:R.pred,a:null,r:'p',sim:D.sim});save();renderHist();
+ $('#out').innerHTML=`<div class="card">${D.sim?'<div class="sim">🧪 SIMULATED DATA — NOT REAL PRICES</div>':''}
+ <div class="sig ${R.dir}">${lab}</div>${R.low?'<div class="warn">⚠️ LOW CONFIDENCE — MARKET CONDITIONS UNCLEAR</div>':''}
+ <h2 style="text-align:center;margin:6px 0 0">15-MIN PROBABILITY</h2>
+ <div class="pr"><span class="UP">UP ${R.up}%</span><span class="DOWN">DOWN ${R.dn}%</span><span class="NEUTRAL">NEUTRAL ${R.ne}%</span></div>
+ <div class="two"><div><small>${asset} NOW</small><span class="num">${fp(R.P)}</span></div><div><small>15-MIN TARGET</small><span class="num ${R.dir}">${fp(R.pred)}</span></div></div>
+ <div class="row"><span>Expected range</span><b class="mono">${fp(R.lo)} — ${fp(R.hi)}</b></div>
+ <div class="row"><span>Estimated move</span><b class="mono">${R.mv>=0?'+':''}${R.mv.toFixed(3)}%</b></div>
+ <div class="row"><span>Confidence</span><b class="mono">${R.conf!=null?R.conf+'%':'— (no trade)'}</b></div>
+ <div class="bar">${'█'.repeat(n)+'░'.repeat(10-n)} ${R.strength}%</div><div class="mu" style="text-align:center">SIGNAL STRENGTH</div>
+ <div id="cdbox"><span class="k">⏱️ PREDICTION WINDOW</span><span id="cd">15:00</span></div></div>
+ <div class="card"><h2>MARKET REGIME</h2><div class="num" style="font-size:20px">${R.reg[0]} ${R.reg[1]}</div></div>
+ <div class="card"><h2>WHY?</h2><ul class="ul">${R.why.map(w=>`<li>${w.v>0?'🟢':w.v<0?'🔴':'⚪'} ${esc(w.t)}</li>`).join('')}${R.F.map(f=>`<li>⚠️ ${esc(f)}</li>`).join('')}</ul></div>
+ <div class="card"><h2>PRICE TARGETS</h2><div class="grid"><div><span class="k">CURRENT</span><b>${fp(R.P)}</b></div><div><span class="k">15-MIN TARGET</span><b>${fp(R.pred)}</b></div><div><span class="k">BULLISH TARGET</span><b class="UP">${fp(R.bull)}</b></div><div><span class="k">BEARISH TARGET</span><b class="DOWN">${fp(R.bear)}</b></div></div>
+ <div class="row" style="margin-top:10px"><span>Invalidation level</span><b class="mono" style="color:var(--am)">${R.inv!=null?fp(R.inv):'n/a — no trade'}</b></div>
+ <p class="mu">Targets use nearby 5m swing highs/lows and recent realized volatility (±1σ ≈ ${fp(R.sig)} over 15 min), not fixed percentages.</p></div>
+ <div class="card"><h2>1-MIN CANDLES + FORECAST</h2>${chart(R.m1,R)}<p class="mu">Blue dashed = forecast path, shaded = ≈68% expected range, amber = invalidation.</p></div>
+ <div class="card"><details><summary>🧠 Analyst breakdown (6)</summary>${R.ag.map(a=>`<div class="ag"><b>${a.name==='Volatility'||a.name==='Risk'?'⚪':ic(a.s)} ${a.name}</b>${a.w?` <span class="mu">lean ${a.s>=0?'+':''}${a.s.toFixed(2)}</span>`:''}<br>${a.notes.map(n=>esc(n[0])).join('<br>')}</div>`).join('')}</details></div>
+ <div class="card mu">🕒 ${D.sim?'SIMULATED data':D.src} · last candle ${hm(R.m1.at(-1).t)} · fetched ${hms(now)}<br>📰 News check: not available in this page (no web access) — check headlines before acting.</div>`;
+ clearInterval(timer);timer=setInterval(tick,500);$('#out').scrollIntoView({behavior:'smooth',block:'start'})}
+function tick(){if(!pred)return;const l=pred.end-Date.now();if(l<=0){clearInterval(timer);finish();return}const e=$('#cd');if(e)e.textContent=mmss(l)}
+async function finish(){
+ const p=pred;let act=null;
+ try{act=p.sim?p.start+(Math.random()+Math.random()+Math.random()-1.5)*2*p.sig:(await ACTIVE.candles(p.asset,60)).at(-1).c}catch(e){}
+ let r='x';if(act!=null)r=p.dir=='NEUTRAL'?'n':(p.dir=='UP'?act>p.start:act<p.start)?'w':'l';
+ const h=hist.find(x=>x.id==p.id);if(h){h.a=act;h.r=r}save();renderHist();
+ const df=act!=null?act-p.target:null,inr=act!=null&&act>=p.lo&&act<=p.hi;
+ const el=$('#cdbox');if(!el)return;
+ el.innerHTML=`<div class="sig" style="font-size:22px">🔔 PREDICTION COMPLETE</div>`+(act==null?'<div class="warn">Actual price unavailable — this prediction was not scored.</div>':`
+ <div class="row"><span>Starting price</span><b class="mono">${fp(p.start)}</b></div><div class="row"><span>Predicted price</span><b class="mono">${fp(p.target)}</b></div><div class="row"><span>Actual price</span><b class="mono">${fp(act)}</b></div>
+ <div class="row"><span>Difference vs prediction</span><b class="mono">${df>=0?'+':'-'}${fp(Math.abs(df))} (${(df/p.target*100).toFixed(3)}%)</b></div>
+ <div class="row"><span>Inside expected range</span><b>${inr?'Yes ✅':'No ❌'}</b></div>
+ <div class="row"><span>Call</span><b>${p.dir}: ${r=='w'?'✅ Correct':r=='l'?'❌ Wrong':'— no trade'}</b></div>`)+`<button class="big" id="again" style="margin-top:12px">🔄 RUN NEW PREDICTION</button>`;
+ $('#again').onclick=run}
+function renderHist(){
+ const sc=hist.filter(h=>!h.sim&&(h.r=='w'||h.r=='l')),w=sc.filter(h=>h.r=='w').length,S={w:'✅',l:'❌',n:'—',p:'⏳',x:'?'};
+ $('#hist').innerHTML=`<h2>📊 SESSION HISTORY</h2><div class="stats"><div><b>${sc.length}</b>Predictions</div><div><b>${w}</b>Correct</div><div><b>${sc.length-w}</b>Incorrect</div><div><b>${sc.length?Math.round(100*w/sc.length)+'%':'—'}</b>Accuracy</div></div>`+
+ (hist.length?`<div class="tw"><table><tr><th>Time</th><th>Asset</th><th>Call</th><th>Target</th><th>Actual</th><th></th></tr>${hist.slice(-20).reverse().map(h=>`<tr><td>${hm(h.t)}</td><td>${h.sim?'🧪 ':''}${esc(h.asset)}</td><td>${h.dir=='UP'?'🟢 UP':h.dir=='DOWN'?'🔴 DOWN':'⚪ —'}</td><td>${fp(h.tg)}</td><td>${h.a!=null?fp(h.a):'…'}</td><td>${S[h.r]}</td></tr>`).join('')}</table></div>`:'<p class="mu">No predictions yet.</p>')+
+ '<p class="mu">Counts only live UP/DOWN calls (simulated runs and no-trades excluded). Small samples are noise; past accuracy does not predict future results.</p>'}
+function unavail(e){
+ $('#out').innerHTML=`<div class="card"><div class="warn" style="font-size:16px">⚠️ LIVE DATA UNAVAILABLE</div>
+ <p>Couldn't load live ${esc(sel)} candles (${esc(e.message||e)}). No prediction was made — a 15-minute forecast can't be reliably built from missing or stale data.</p>
+ <p class="mu"><b>To go live you need:</b> a CORS-enabled candle feed — e.g. Coinbase Exchange <span class="mono">/products/{id}/candles</span> (no key), Kraken OHLC, or Binance klines (also gives taker buy/sell volume) — or a market-data connector. It tries Coinbase, Kraken, then Bitstamp (reasons are in the line above). To add a feed, edit <span class="mono">SOURCES</span>; it only has to return <span class="mono">[{t,o,h,l,c,v}]</span> oldest-first.</p>
+ <button class="big" id="simb" style="background:#3b2a5c;min-height:52px">🧪 TRY FAKE DATA (UI test only)</button><p class="mu">Simulated data is random and clearly labeled — it only lets you try the interface and engine.</p></div>`;
+ $('#simb').onclick=()=>{sim=true;run()}}
+async function run(){
+ if(busy)return;busy=true;clearInterval(timer);pred=null;const g=$('#go');g.disabled=true;g.textContent='⏳ ANALYZING…';$('#out').innerHTML='';
+ $('#st').innerHTML=sim?'🧪 Simulated mode — <span class="lk" id="ex">exit</span>':`Pulling ${esc(sel)} candles (1m · 5m · 15m)…`;
+ const ex=$('#ex');if(ex)ex.onclick=()=>{sim=false;$('#st').textContent=''};
+ try{let D;try{D=sim?simData():await getLive()}catch(e){unavail(e);return}
+  try{view(analyze(D),sel)}catch(e){unavail(e)}}
+ finally{g.disabled=false;g.textContent='🔮 PREDICT NEXT 15 MINUTES';busy=false;if(!sim)$('#st').textContent=''}}
+$('#go').onclick=run;chips();renderHist();pulse();setInterval(pulse,10000);
+</script></body></html>
